@@ -44,18 +44,18 @@ The class provides multiple methods for feature extraction:
 
 ### extract_date_features
 - Converts the `date` column into a datetime format.
-- Extracts date components: year, month, day, day of the week, week of the year, and day of the year.
+- Extracts date components: `year`, `month`, `day`, `day of the week`, `week of the year`, and `day of the year`.
 - Creates binary indicators:
-  - is_weekend: Checks if the day is Saturday (5) or Sunday (6).
-  - is_holiday: Checks if the date is a holiday for the respective country.
+  - `is_weekend`: Checks if the day is Saturday (5) or Sunday (6).
+  - `is_holiday`: Checks if the date is a holiday for the respective country.
 - Adds season classification based on month.
-- Defines holiday_period to mark a broader holiday season (±35 days from major holidays).
+- Defines `holiday_period` to mark a broader holiday season (±35 days from major holidays).
 - Applies cyclical encoding using sine and cosine transformations:
-  - day_of_week_sin & day_of_week_cos
-  - month_sin & month_cos
-  - day_of_year_sin & day_of_year_cos
+  - `day_of_week_sin` & `day_of_week_cos`
+  - `month_sin` & `month_cos`
+  - `day_of_year_sin` & `day_of_year_cos`
 - Fetches GDP values and computes the GDP percentage change from the previous year.
-- Drops unnecessary columns: date, month, day, and week_of_year.
+- Drops unnecessary columns: `date`, `month`, `day`, and `week_of_year`.
 
 ```python
 def extract_date_features(self):
@@ -83,7 +83,7 @@ def extract_date_features(self):
 
 ### assign_season
 - Maps months to seasons:
-  - Winter (Dec-Feb), Spring (Mar-May), Summer (Jun-Aug), Fall (Sep-Nov).
+  - `Winter` (Dec-Feb), `Spring` (Mar-May), `Summer` (Jun-Aug), `Fall` (Sep-Nov).
  
 ```python
 def assign_season(self, month):
@@ -118,4 +118,172 @@ def flag_holiday_period(self, row):
 ```python
 train = DateFeatureEngineer(train).extract_date_features()
 test = DateFeatureEngineer(test).extract_date_features()
+```
+
+## Final Column Adjustments
+
+- Extracts `test_ids` before dropping the `id` column to retain them for submission.
+- Retrieves unique values of categorical features (`products`, `stores`, `countries`) for reference.
+- Removes the `id` column from both datasets since it does not contribute to predictions.
+- Splits `train` into:
+  - `X_train`: Feature set (all columns except `num_sold`).
+  - `y_train`: Target variable (`num_sold`).
+- Prepares `X_test` as the cleaned test dataset, ready for model inference.
+
+```python
+# Extract test IDs before dropping
+test_ids = test['id'].values
+
+# Get unique values of categorical features
+products = train['product'].unique().tolist()
+stores = train['store'].unique().tolist()
+countries = train['country'].unique().tolist()
+
+# Drop unnecessary columns
+train = train.drop(columns=['id'])
+test = test.drop(columns=['id'])
+
+# Split training data into features (X) and target (y)
+X_train = train.drop(columns=['num_sold'])
+y_train = train['num_sold']
+X_test = test
+```
+
+## Class: ProductModelTrainer
+
+### Initialization (__init__ method)
+- Stores raw training (`X_train`, `y_train`) and test (`X_test`) data.
+- Applies log transformation to `y_train`.
+- Stores lists of `products`, `test_ids`, `stores`, and `countries`.
+- Initializes empty DataFrames for:
+  - Overall predictions
+  - Product-based predictions
+  - Store-based predictions
+  - Country-based predictions
+- Identifies categorical columns present in both train and test data.
+- Initializes a global `TargetEncoder` and dictionaries for storing encoders for products, stores, and countries.
+- Defines parameters optimized with Optuna (`LGBMRegressor`) for:
+  - Products (5 different models)
+  - Stores (3 models)
+  - Countries (6 models)
+
+```python
+class ProductModelTrainer:
+    def __init__(self, X_train, y_train, X_test, products, test_ids, stores, countries):
+        self.X_train_raw = X_train
+        # Apply log transformation as in the original code.
+        self.y_train = np.log1p(y_train + 1)
+        self.X_test_raw = X_test
+        self.products = products
+        self.test_ids = test_ids
+        self.stores = stores
+        self.countries = countries
+
+        # Initialize empty dataframes to hold predictions for each group.
+        self.predictions = pd.DataFrame()
+        self.predictions_product = pd.DataFrame()
+        self.predictions_store = pd.DataFrame()
+        self.predictions_country = pd.DataFrame()
+
+        # Identify categorical columns present in both train and test.
+        self.categorical_cols_list = self.X_train_raw.select_dtypes(include=['object']).columns.intersection(
+            self.X_test_raw.columns
+        ).tolist()
+
+        # Global TargetEncoder (if needed)
+        self.target_encoder = TargetEncoder(cols=self.categorical_cols_list)
+
+        # Dictionaries to store TargetEncoders per product, store, or country.
+        self.target_encoders_products = {}
+        self.target_encoders_stores = {}
+        self.target_encoders_countries = {}
+
+        # Predefined models for products
+        self.product_models = {
+            "Kaggle": LGBMRegressor(
+                random_state=0,
+                n_estimators=365,
+                max_depth=6,
+                learning_rate=0.09951902014219748,
+                num_leaves=93,
+                subsample=0.8575678510026675,
+                colsample_bytree=0.7836591837611223,
+                reg_alpha=0.43350937968877423,
+                reg_lambda=0.19887648661222768,
+                min_child_weight=9
+        # ETC. FULL VERSION IN THE REPOSITORY FILES
+        self.store_models = {
+        # ETC. FULL VERSION IN THE REPOSITORY FILES
+        self.country_models = {
+        # ETC. FULL VERSION IN THE REPOSITORY FILES
+```
+
+## Data Splitting Methods
+### split_data_by_product()
+- Checks if the `product` column exists in X_train.
+- Creates subsets of data per product and applies Target Encoding.
+- Saves the fitted encoder for later use.
+```python
+def split_data_by_product(self):
+        subsets = {}
+        if 'product' not in self.X_train_raw.columns:
+            raise KeyError("'product' column is missing in X_train.")
+        for product in self.products:
+            product_mask = self.X_train_raw['product'] == product
+            if product_mask.sum() == 0:
+                print(f"No data found for product: {product}")
+                continue
+            X_subset = self.X_train_raw.loc[product_mask].copy()
+            y_subset = self.y_train.loc[product_mask]
+            encoder = TargetEncoder(cols=self.categorical_cols_list)
+            X_subset_encoded = encoder.fit_transform(X_subset, y_subset)
+            self.target_encoders_products[product] = encoder  # Save encoder for test-time.
+            subsets[product] = (X_subset_encoded, y_subset)
+        return subsets
+```
+
+### split_data_by_store()
+- Checks for `store` column.
+- Creates subsets of data per store and applies Target Encoding.
+- Stores the fitted encoder.
+```python
+def split_data_by_store(self):
+        subsets = {}
+        if 'store' not in self.X_train_raw.columns:
+            raise KeyError("'store' column is missing in X_train.")
+        for store in self.stores:
+            store_mask = self.X_train_raw['store'] == store
+            if store_mask.sum() == 0:
+                print(f"No data found for store: {store}")
+                continue
+            X_subset = self.X_train_raw.loc[store_mask].copy()
+            y_subset = self.y_train.loc[store_mask]
+            encoder = TargetEncoder(cols=self.categorical_cols_list)
+            X_subset_encoded = encoder.fit_transform(X_subset, y_subset)
+            self.target_encoders_stores[store] = encoder
+            subsets[store] = (X_subset_encoded, y_subset)
+        return subsets
+```
+
+### split_data_by_country()
+- Checks for `country` column.
+- Creates subsets per country and applies Target Encoding.
+- Saves the encoder for later use.
+```python
+def split_data_by_country(self):
+        subsets = {}
+        if 'country' not in self.X_train_raw.columns:
+            raise KeyError("'country' column is missing in X_train.")
+        for country in self.countries:
+            country_mask = self.X_train_raw['country'] == country
+            if country_mask.sum() == 0:
+                print(f"No data found for country: {country}")
+                continue
+            X_subset = self.X_train_raw.loc[country_mask].copy()
+            y_subset = self.y_train.loc[country_mask]
+            encoder = TargetEncoder(cols=self.categorical_cols_list)
+            X_subset_encoded = encoder.fit_transform(X_subset, y_subset)
+            self.target_encoders_countries[country] = encoder  # Save encoder for later.
+            subsets[country] = (X_subset_encoded, y_subset)
+        return subsets
 ```
