@@ -38,7 +38,7 @@ This documentation serves as a comprehensive record of the technical process, hi
   <tr>
     <td style="text-align: center; font-family: Arial, sans-serif; font-size: 50;">
       <img src="https://github.com/user-attachments/assets/7e141746-d572-4e52-96cf-31a1f01f3a97" alt="Icon" style="width: 20px; vertical-align: down; margin-right: 10px;">
-      <b>Our Final Kaggle Score: 0.10609</b>
+      <b>Our Final Kaggle MAPE Score: 0.10609</b>
     </td>
   </tr>
 </table>
@@ -47,7 +47,7 @@ This documentation serves as a comprehensive record of the technical process, hi
   <tr>
     <td style="text-align: center; font-family: Arial, sans-serif; font-size: 50;">
       <img src="https://github.com/user-attachments/assets/7e141746-d572-4e52-96cf-31a1f01f3a97" alt="Icon" style="width: 20px; vertical-align: down; margin-right: 10px;">
-      <b>1<sup>st</sup> Place Kaggle Score: 0.04265</b>
+      <b>1<sup>st</sup> Place Kaggle MAPE Score: 0.04265</b>
     </td>
   </tr>
 </table>
