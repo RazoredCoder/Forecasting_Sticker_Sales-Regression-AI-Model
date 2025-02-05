@@ -34,6 +34,24 @@ This documentation serves as a comprehensive record of the technical process, hi
 
 # 🎉 Final Version
 
+<table style="border-collapse: collapse; border: 1px solid black; border-radius: 15px; background-color: #cce7ff; padding: 5px;">
+  <tr>
+    <td style="text-align: center; font-family: Arial, sans-serif; font-size: 50;">
+      <img src="https://github.com/user-attachments/assets/7e141746-d572-4e52-96cf-31a1f01f3a97" alt="Icon" style="width: 20px; vertical-align: down; margin-right: 10px;">
+      <b>Our Final Kaggle Score: 0.10609</b>
+    </td>
+  </tr>
+</table>
+
+<table style="border-collapse: collapse; border: 1px solid black; border-radius: 15px; background-color: #cce7ff; padding: 5px;">
+  <tr>
+    <td style="text-align: center; font-family: Arial, sans-serif; font-size: 50;">
+      <img src="https://github.com/user-attachments/assets/7e141746-d572-4e52-96cf-31a1f01f3a97" alt="Icon" style="width: 20px; vertical-align: down; margin-right: 10px;">
+      <b>1<sup>st</sup> Place Kaggle Score: 0.04265</b>
+    </td>
+  </tr>
+</table>
+
 ## 🏗️ Class Definition & Initialization (__init__)
 The `DateFeatureEngineer` class is designed to extract and enhance date-related features in a dataset. The constructor (`__init__`) takes a `DataFrame` (df) and makes a copy of it to avoid modifying the original data.
 
