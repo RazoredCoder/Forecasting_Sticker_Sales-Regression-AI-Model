@@ -287,3 +287,160 @@ def split_data_by_country(self):
             subsets[country] = (X_subset_encoded, y_subset)
         return subsets
 ```
+## Training & Evaluation
+### train_and_evaluate()
+- Selects the model based on the `model_type` (product/store/country).
+- Fits the model to training data with early stopping.
+- Computes and prints **Mean Absolute Percentage Error (MAPE)**.
+- Encodes test data using the stored `TargetEncoder`.
+- Makes predictions on the test data.
+- Saves predictions in the respective DataFrame.
+
+```python
+def train_and_evaluate(self, name, X_train_split, X_val_split, y_train_split, y_val_split, model_type):
+        
+        if model_type == 'product':
+            model = self.product_models.get(name)
+        elif model_type == 'store':
+            model = self.store_models.get(name)
+        elif model_type == 'country':
+            model = self.country_models.get(name)
+        else:
+            raise ValueError("Unsupported model type: " + model_type)
+        
+        try:
+            model.fit(X_train_split, y_train_split, eval_set=[(X_val_split, y_val_split)], early_stopping_rounds=10, verbose=False)
+        except TypeError:
+            model.fit(X_train_split, y_train_split)
+
+        # Store the tuned model in the corresponding dictionary.
+        if model_type == 'product':
+            self.product_models[name] = model
+        elif model_type == 'store':
+            self.store_models[name] = model
+        elif model_type == 'country':
+            self.country_models[name] = model
+
+        # Validate.
+        y_val_pred = model.predict(X_val_split)
+        y_val_pred = np.expm1(y_val_pred)
+        y_val_actual = np.expm1(y_val_split)
+        mape = mean_absolute_percentage_error(y_val_actual, y_val_pred)
+        print(f"MAPE for {name}: {mape:.4f}")
+
+        # Select test subset based on model_type.
+        if model_type == 'product':
+            test_mask = self.X_test_raw['product'] == name
+        elif model_type == 'store':
+            test_mask = self.X_test_raw['store'] == name
+        elif model_type == 'country':
+            test_mask = self.X_test_raw['country'] == name
+        else:
+            raise ValueError("Unsupported model type: " + model_type)
+
+        X_test_subset = self.X_test_raw.loc[test_mask].copy()
+        # Encode test data using the appropriate encoder.
+        if model_type == 'product':
+            X_test_encoded = self.target_encoders_products[name].transform(X_test_subset)
+        elif model_type == 'store':
+            X_test_encoded = self.target_encoders_stores[name].transform(X_test_subset)
+        elif model_type == 'country':
+            X_test_encoded = self.target_encoders_countries[name].transform(X_test_subset)
+        else:
+            raise ValueError("Unsupported model type: " + model_type)
+
+        # Make predictions on the test subset.
+        test_predictions = model.predict(X_test_encoded)
+        test_predictions = np.expm1(test_predictions)
+        test_ids = self.test_ids[test_mask.values]
+        pred_df = pd.DataFrame({'id': test_ids, 'num_sold': test_predictions})
+
+        # Save predictions to the corresponding dataframe.
+        if model_type == 'product':
+            self.predictions_product = pd.concat([self.predictions_product, pred_df], ignore_index=True)
+        elif model_type == 'store':
+            self.predictions_store = pd.concat([self.predictions_store, pred_df], ignore_index=True)
+        elif model_type == 'country':
+            self.predictions_country = pd.concat([self.predictions_country, pred_df], ignore_index=True)
+```
+## Merging & Saving Predictions
+### merge_predictions_and_save()
+- Merges product, store, and country predictions based on `id`.
+- Computes the median prediction across different models.
+- Rounds `num_sold` values and saves the final CSV submission.
+
+```python
+def merge_predictions_and_save(self, submission_path):
+        # Ensure all prediction dataframes have been populated.
+        if self.predictions_product.empty or self.predictions_store.empty or self.predictions_country.empty:
+            raise ValueError("One or more prediction dataframes are empty.")
+
+        # Rename columns before merging so that each prediction source is identified.
+        pred_product = self.predictions_product.rename(columns={'num_sold': 'num_sold_product'})
+        pred_store = self.predictions_store.rename(columns={'num_sold': 'num_sold_store'})
+        pred_country = self.predictions_country.rename(columns={'num_sold': 'num_sold_country'})
+
+        # Merge the predictions on 'id'.
+        merged = pred_product.merge(pred_store, on='id', how='outer')
+        merged = merged.merge(pred_country, on='id', how='outer')
+
+        # Use the median prediction from the three sources.
+        merged['num_sold'] = merged[['num_sold_product', 'num_sold_store', 'num_sold_country']].median(axis=1)
+        self.predictions = merged[['id', 'num_sold']].sort_values(by='id').reset_index(drop=True)
+        self.predictions['num_sold'] = self.predictions['num_sold'].round().astype(int)
+        self.predictions.to_csv(submission_path, index=False)
+        print('Submission saved to', submission_path)
+```
+
+## Main Processing Pipeline
+### process()
+- Splits the training data into subsets for:
+  - Products
+  - Stores
+  - Countries
+- Trains and evaluates models for each category.
+- Calls `merge_predictions_and_save()` to generate the final submission.
+
+```python
+def process(self):
+        # Split the training data for each category.
+        subsets_product = self.split_data_by_product()
+        subsets_store = self.split_data_by_store()
+        subsets_country = self.split_data_by_country()
+
+        # For product models, do not perform Optuna tuning.
+        for product in self.product_models.keys():
+            if product in subsets_product:
+                X_subset, y_subset = subsets_product[product]
+                X_train_split, X_val_split, y_train_split, y_val_split = train_test_split(
+                    X_subset, y_subset, test_size=0.2, random_state=42
+                )
+                self.train_and_evaluate(product, X_train_split, X_val_split, y_train_split, y_val_split,
+                                        model_type='product')
+            else:
+                print(f"Skipping {product} because no training data is available.")
+
+        # For store models, do not perform Optuna tuning.
+        for store in self.store_models.keys():
+            if store in subsets_store:
+                X_subset, y_subset = subsets_store[store]
+                X_train_split, X_val_split, y_train_split, y_val_split = train_test_split(
+                    X_subset, y_subset, test_size=0.2, random_state=42
+                )
+                self.train_and_evaluate(store, X_train_split, X_val_split, y_train_split, y_val_split,
+                                        model_type='store')
+            else:
+                print(f"Skipping {store} because no training data is available.")
+
+        # For country models, perform Optuna tuning only for the "Singapore" model.
+        for country in self.country_models.keys():
+            if country in subsets_country:
+                X_subset, y_subset = subsets_country[country]
+                X_train_split, X_val_split, y_train_split, y_val_split = train_test_split(
+                    X_subset, y_subset, test_size=0.2, random_state=42
+                )
+                self.train_and_evaluate(country, X_train_split, X_val_split, y_train_split, y_val_split,
+                                        model_type='country')
+            else:
+                print(f"Skipping {country} because no training data is available.")
+```
