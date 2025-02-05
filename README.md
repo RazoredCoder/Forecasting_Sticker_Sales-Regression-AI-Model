@@ -131,19 +131,15 @@ test = DateFeatureEngineer(test).extract_date_features()
 - Prepares `X_test` as the cleaned test dataset, ready for model inference.
 
 ```python
-# Extract test IDs before dropping
 test_ids = test['id'].values
 
-# Get unique values of categorical features
 products = train['product'].unique().tolist()
 stores = train['store'].unique().tolist()
 countries = train['country'].unique().tolist()
 
-# Drop unnecessary columns
 train = train.drop(columns=['id'])
 test = test.drop(columns=['id'])
 
-# Split training data into features (X) and target (y)
 X_train = train.drop(columns=['num_sold'])
 y_train = train['num_sold']
 X_test = test
@@ -179,26 +175,21 @@ class ProductModelTrainer:
         self.stores = stores
         self.countries = countries
 
-        # Initialize empty dataframes to hold predictions for each group.
         self.predictions = pd.DataFrame()
         self.predictions_product = pd.DataFrame()
         self.predictions_store = pd.DataFrame()
         self.predictions_country = pd.DataFrame()
 
-        # Identify categorical columns present in both train and test.
         self.categorical_cols_list = self.X_train_raw.select_dtypes(include=['object']).columns.intersection(
             self.X_test_raw.columns
         ).tolist()
 
-        # Global TargetEncoder (if needed)
         self.target_encoder = TargetEncoder(cols=self.categorical_cols_list)
 
-        # Dictionaries to store TargetEncoders per product, store, or country.
         self.target_encoders_products = {}
         self.target_encoders_stores = {}
         self.target_encoders_countries = {}
 
-        # Predefined models for products
         self.product_models = {
             "Kaggle": LGBMRegressor(
                 random_state=0,
@@ -313,7 +304,6 @@ def train_and_evaluate(self, name, X_train_split, X_val_split, y_train_split, y_
         except TypeError:
             model.fit(X_train_split, y_train_split)
 
-        # Store the tuned model in the corresponding dictionary.
         if model_type == 'product':
             self.product_models[name] = model
         elif model_type == 'store':
@@ -321,14 +311,12 @@ def train_and_evaluate(self, name, X_train_split, X_val_split, y_train_split, y_
         elif model_type == 'country':
             self.country_models[name] = model
 
-        # Validate.
         y_val_pred = model.predict(X_val_split)
         y_val_pred = np.expm1(y_val_pred)
         y_val_actual = np.expm1(y_val_split)
         mape = mean_absolute_percentage_error(y_val_actual, y_val_pred)
         print(f"MAPE for {name}: {mape:.4f}")
 
-        # Select test subset based on model_type.
         if model_type == 'product':
             test_mask = self.X_test_raw['product'] == name
         elif model_type == 'store':
@@ -349,13 +337,11 @@ def train_and_evaluate(self, name, X_train_split, X_val_split, y_train_split, y_
         else:
             raise ValueError("Unsupported model type: " + model_type)
 
-        # Make predictions on the test subset.
         test_predictions = model.predict(X_test_encoded)
         test_predictions = np.expm1(test_predictions)
         test_ids = self.test_ids[test_mask.values]
         pred_df = pd.DataFrame({'id': test_ids, 'num_sold': test_predictions})
 
-        # Save predictions to the corresponding dataframe.
         if model_type == 'product':
             self.predictions_product = pd.concat([self.predictions_product, pred_df], ignore_index=True)
         elif model_type == 'store':
@@ -375,16 +361,13 @@ def merge_predictions_and_save(self, submission_path):
         if self.predictions_product.empty or self.predictions_store.empty or self.predictions_country.empty:
             raise ValueError("One or more prediction dataframes are empty.")
 
-        # Rename columns before merging so that each prediction source is identified.
         pred_product = self.predictions_product.rename(columns={'num_sold': 'num_sold_product'})
         pred_store = self.predictions_store.rename(columns={'num_sold': 'num_sold_store'})
         pred_country = self.predictions_country.rename(columns={'num_sold': 'num_sold_country'})
 
-        # Merge the predictions on 'id'.
         merged = pred_product.merge(pred_store, on='id', how='outer')
         merged = merged.merge(pred_country, on='id', how='outer')
 
-        # Use the median prediction from the three sources.
         merged['num_sold'] = merged[['num_sold_product', 'num_sold_store', 'num_sold_country']].median(axis=1)
         self.predictions = merged[['id', 'num_sold']].sort_values(by='id').reset_index(drop=True)
         self.predictions['num_sold'] = self.predictions['num_sold'].round().astype(int)
@@ -408,7 +391,6 @@ def process(self):
         subsets_store = self.split_data_by_store()
         subsets_country = self.split_data_by_country()
 
-        # For product models, do not perform Optuna tuning.
         for product in self.product_models.keys():
             if product in subsets_product:
                 X_subset, y_subset = subsets_product[product]
@@ -420,7 +402,6 @@ def process(self):
             else:
                 print(f"Skipping {product} because no training data is available.")
 
-        # For store models, do not perform Optuna tuning.
         for store in self.store_models.keys():
             if store in subsets_store:
                 X_subset, y_subset = subsets_store[store]
@@ -432,7 +413,6 @@ def process(self):
             else:
                 print(f"Skipping {store} because no training data is available.")
 
-        # For country models, perform Optuna tuning only for the "Singapore" model.
         for country in self.country_models.keys():
             if country in subsets_country:
                 X_subset, y_subset = subsets_country[country]
