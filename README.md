@@ -1,0 +1,1 @@
+# Forecasting_Sticker_Sales-Regression-AI-Model
