@@ -444,3 +444,13 @@ def process(self):
             else:
                 print(f"Skipping {country} because no training data is available.")
 ```
+## Executing the functions
+- Creates an instance of `ProductModelTrainer` using neccessery parameters: `X_train`, `y_train`, `X_test`, `products`, `test_ids`, `stores`, `countries`.
+- Calls `process()` to activate all the functions: `plit_data_by_product()`, `split_data_by_store()`, `split_data_by_country()`, `train_and_evaluate()`.
+- Calls the final method `merge_predictions_and_save()` to properly save predictions to `submission.csv`.
+
+```python
+trainer = ProductModelTrainer(X_train, y_train, X_test, products, test_ids, stores, countries)
+trainer.process()
+trainer.merge_predictions_and_save("submission.csv")
+```
