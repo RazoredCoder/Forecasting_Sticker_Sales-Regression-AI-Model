@@ -4,32 +4,33 @@
 *https://www.kaggle.com/competitions/playground-series-s5e1*
 
 *Authors: Maksymilian Wiciński, Adam Tokarski*
-### 🎯 Introduction
+### ⭐ Introduction
 
-In this project, we address a complex forecasting problem by predicting multiple years of sales for Kaggle-branded stickers sold across various fictitious stores and real-world countries. Our synthetic dataset encapsulates key real-world dynamics—including seasonality, holiday effects, and macroeconomic trends—allowing us to simulate and overcome challenges commonly encountered in time-series prediction tasks.
+This document details the approach used to address the Kaggle Sticker Sales Forecasting Challenge, which involves predicting multiple years of sales for Kaggle-branded stickers across various fictitious stores and real-world countries. The synthetic dataset captures several real-world dynamics, including weekend and holiday effects, seasonality, and macroeconomic influences, making it an excellent testbed for advanced forecasting techniques.
 
-- Objective:
-Develop an end-to-end machine learning pipeline to accurately forecast future sticker sales, showcasing our expertise in data preprocessing, advanced feature engineering, and ensemble modeling.
+🎯 **Objective:**  
+Develop an end-to-end machine learning pipeline that includes comprehensive data preprocessing, advanced date feature engineering, and ensemble modeling to forecast future sticker sales.
 
-- Data Engineering & Feature Extraction:
-  - Comprehensive Date Features: Extracted granular date components (year, month, day, weekday, etc.) and engineered binary flags for weekends and holidays.
-  - Cyclical and Seasonal Transformations: Applied sine and cosine transformations to capture cyclical patterns in days, months, and the year.
-  - Economic Indicators: Integrated external GDP data to account for macroeconomic influences on sales, computing year-over-year percentage changes.
+🔍 **Data Engineering & Feature Extraction:**  
+- **Date Features:** Extracted detailed date components (year, month, day, weekday, etc.) and created binary indicators for weekends and holidays.
+- **Cyclical Transformations:** Applied sine and cosine transformations to capture cyclical patterns in days, months, and the overall year.
+- **Economic Context:** Integrated external GDP data to include macroeconomic trends, calculating year-over-year changes to enhance feature relevance.
 
-- Modeling Approach:
-  - Segmented Modeling: Developed tailored LightGBM models for distinct segments—products, stores, and countries—to capture localized patterns and improve predictive performance.
-  - Advanced Target Encoding: Utilized target encoding for categorical features to enhance model robustness and mitigate noise from heterogeneous data.
-  - Rigorous Evaluation: Employed early stopping and performance metrics such as Mean Absolute Percentage Error (MAPE) to ensure reliable predictions and continuous model improvement.
+🤖 **Modeling Approach:**  
+- **Segmented Modeling:** Divided the data by products, stores, and countries to train specific LightGBM models tailored to each segment.
+- **Target Encoding:** Implemented target encoding for categorical variables to improve model performance and handle heterogeneous data.
+- **Evaluation Metrics:** Employed early stopping and Mean Absolute Percentage Error (MAPE) as key evaluation metrics to monitor model performance.
 
-- Visualization & Communication:
-  - Created detailed data visualizations to illuminate temporal trends, feature distributions, and model performance, reinforcing transparent, data-driven decision making.
-  - Documented every step of our pipeline to highlight our commitment to clarity, reproducibility, and collaborative communication.
+📊 **Visualization & Communication:**  
+- Created visualizations to explore temporal trends, feature distributions, and model evaluation results.
+- Maintained detailed documentation of each step to ensure reproducibility and clarity in the workflow.
 
-- Tools & Technologies:
-  - Leveraged a powerful Python ecosystem (pandas, NumPy, scikit-learn, LightGBM) and visualization libraries (Matplotlib, Seaborn) to build a scalable, maintainable, and high-performing ML pipeline.
-  - Incorporated best practices in code modularity and documentation, ensuring that our approach is both innovative and accessible for cross-functional teams.
+🛠️ **Tools & Technologies:**  
+- **Programming Environment:** Python, using libraries such as pandas, NumPy, scikit-learn, and LightGBM.
+- **Visualization:** Matplotlib and Seaborn for data exploration and result presentation.
+- **Workflow Management:** Structured code into modular components to facilitate scalability and maintenance.
 
-This project not only demonstrates our technical prowess in advanced machine learning and data analytics but also highlights our ability to communicate complex insights effectively. Our commitment to continuous learning, collaboration, and data-driven innovation makes us well-equipped to drive impactful solutions in any dynamic ML environment.
+This documentation serves as a comprehensive record of the technical process, highlighting practical skills in data processing, feature engineering, and model development within a competitive machine learning context.
 
 # Final Version
 
