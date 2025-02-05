@@ -32,9 +32,9 @@ Develop an end-to-end machine learning pipeline that includes comprehensive data
 
 This documentation serves as a comprehensive record of the technical process, highlighting practical skills in data processing, feature engineering, and model development within a competitive machine learning context.
 
-# Final Version
+# 🎉 Final Version
 
-## Class Definition & Initialization (__init__)
+## 🏗️ Class Definition & Initialization (__init__)
 The `DateFeatureEngineer` class is designed to extract and enhance date-related features in a dataset. The constructor (`__init__`) takes a `DataFrame` (df) and makes a copy of it to avoid modifying the original data.
 
 - Country Specific Holiday Dictionary (`country_holidays`)
@@ -71,7 +71,7 @@ class DateFeatureEngineer:
         }
 ```
 
-## Function Definitions
+## 🔧 Function Definitions
 The class provides multiple methods for feature extraction:
 
 ### extract_date_features
@@ -143,7 +143,7 @@ def flag_holiday_period(self, row):
         return ((gdp_data.get(row['year'], 0) - gdp_data.get(row['year'] - 1, 0)) / gdp_data.get(row['year'] - 1, 1)) * 100
 ```
 
-## Applying the Functions
+## 🚀 Applying the Functions
 - Creates an instance of DateFeatureEngineer for both training and test datasets.
 - Calls extract_date_features() to generate new features.
 
@@ -152,7 +152,7 @@ train = DateFeatureEngineer(train).extract_date_features()
 test = DateFeatureEngineer(test).extract_date_features()
 ```
 
-## Final Column Adjustments
+## 🔄 Final Column Adjustments
 
 - Extracts `test_ids` before dropping the `id` column to retain them for submission.
 - Retrieves unique values of categorical features (`products`, `stores`, `countries`) for reference.
@@ -177,7 +177,7 @@ y_train = train['num_sold']
 X_test = test
 ```
 
-## Class: ProductModelTrainer
+## 🤖 Class: ProductModelTrainer
 
 ### Initialization (__init__ method)
 - Stores raw training (`X_train`, `y_train`) and test (`X_test`) data.
@@ -241,7 +241,7 @@ class ProductModelTrainer:
         # ETC. FULL VERSION IN THE REPOSITORY FILES
 ```
 
-## Data Splitting Methods
+## ✂️ Data Splitting Methods
 ### split_data_by_product()
 - Checks if the `product` column exists in X_train.
 - Creates subsets of data per product and applies Target Encoding.
@@ -310,7 +310,7 @@ def split_data_by_country(self):
             subsets[country] = (X_subset_encoded, y_subset)
         return subsets
 ```
-## Training & Evaluation
+## 📈 Training & Evaluation
 ### train_and_evaluate()
 - Selects the model based on the `model_type` (product/store/country).
 - Fits the model to training data with early stopping.
@@ -381,7 +381,7 @@ def train_and_evaluate(self, name, X_train_split, X_val_split, y_train_split, y_
         elif model_type == 'country':
             self.predictions_country = pd.concat([self.predictions_country, pred_df], ignore_index=True)
 ```
-## Merging & Saving Predictions
+## 💾 Merging & Saving Predictions
 ### merge_predictions_and_save()
 - Merges product, store, and country predictions based on `id`.
 - Computes the median prediction across different models.
@@ -407,7 +407,7 @@ def merge_predictions_and_save(self, submission_path):
         print('Submission saved to', submission_path)
 ```
 
-## Main Processing Pipeline
+## 🔄 Main Processing Pipeline
 ### process()
 - Splits the training data into subsets for:
   - Products
@@ -456,7 +456,7 @@ def process(self):
             else:
                 print(f"Skipping {country} because no training data is available.")
 ```
-## Executing the functions
+## ▶️ Executing the functions
 - Creates an instance of `ProductModelTrainer` using neccessery parameters: `X_train`, `y_train`, `X_test`, `products`, `test_ids`, `stores`, `countries`.
 - Calls `process()` to activate all the functions: `plit_data_by_product()`, `split_data_by_store()`, `split_data_by_country()`, `train_and_evaluate()`.
 - Calls the final method `merge_predictions_and_save()` to properly save predictions to `submission.csv`.
