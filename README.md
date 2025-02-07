@@ -485,7 +485,7 @@ trainer.process()
 trainer.merge_predictions_and_save("submission.csv")
 ```
 
-# 📊🔍*Data Overview*
+# 📊 *Data Overview*
 ## Kaggle Data Source
 
 This synthetic dataset contains multi-year sticker sales across different countries and stores, reflecting real-world patterns like weekends, holidays, and seasonality.
