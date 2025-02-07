@@ -484,3 +484,33 @@ trainer = ProductModelTrainer(X_train, y_train, X_test, products, test_ids, stor
 trainer.process()
 trainer.merge_predictions_and_save("submission.csv")
 ```
+
+# 📊🔍*Data Overview*
+## Kaggle Data Source
+
+This synthetic dataset contains multi-year sticker sales across different countries and stores, reflecting real-world patterns like weekends, holidays, and seasonality.
+
+**Files**
+- train.csv: Historical sales for each date, country, store, and item
+- test.csv: Future data requiring predicted sales (num_sold)
+- sample_submission.csv: Example of the required submission format
+
+## **Data visualization and analysis using matplotlib**
+
+This chart shows a single time series of total sales spanning from roughly 2009 to 2017, with values ranging between about 50,000 and 110,000. There are multiple pronounced peaks that reach near 90,000 to 110,000, as well as troughs dipping close to 60,000. Overall, the data exhibits a recurring, wavelike pattern, suggesting some form of seasonality or cyclical behavior over the years.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/8fb13184-8807-4b44-88fc-c80756eec653">
+</p>
+
+This chart shows time series data for total sales (left y-axis) and GDP (right y-axis) in six countries—Canada, Italy, Norway, Finland, Kenya, and Singapore—from 2009 to 2017. Norway has the highest sales and GDP overall, while Kenya remains lowest in both measures. The sales curves fluctuate frequently, whereas the GDP lines change in larger “steps,” reflecting their less frequent reporting intervals.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9112aeb3-2a8d-4274-8518-39bfca230e85">
+</p>
+
+This pie chart illustrates the proportion of missing vs. non‐missing values in the num_sold column. A large blue slice (roughly 96.1%) represents the non‐missing values, while the smaller red slice (about 3.9%) accounts for the missing data, which we decided to delete.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/de560c90-bca0-4b88-9faf-d7516221cef0">
+</p>
